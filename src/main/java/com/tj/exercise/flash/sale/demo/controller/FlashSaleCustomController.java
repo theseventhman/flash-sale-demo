@@ -3,6 +3,7 @@ package com.tj.exercise.flash.sale.demo.controller;
 import com.tj.exercise.flash.sale.demo.entity.SaleTicket;
 import com.tj.exercise.flash.sale.demo.service.Impl.SaleCustomService;
 import com.tj.exercise.flash.sale.demo.util.RateLimterException;
+import com.tj.exercise.flash.sale.demo.util.RedisLimit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,12 +26,17 @@ public class FlashSaleCustomController {
     public String sale(@RequestBody SaleTicket saleTicket){
         String saleResult = "";
         try {
-            saleResult = saleCustomService.buySceneTicket(saleTicket);
+            if(RedisLimit.limit()) {
+                saleResult = saleCustomService.buySceneTicket(saleTicket);
+            }
+            else{
+                saleResult = "qps已满";
+            }
             return saleResult;
         }
         catch(Exception ex){
             if(ex.getMessage().equalsIgnoreCase("请稍后再尝试访问")){
-                return "qps已满";
+                return "aop的拦截起作用了，qps已满";
             }
         }
         return saleResult;
