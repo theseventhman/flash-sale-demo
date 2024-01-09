@@ -52,7 +52,7 @@ public class SaleCustomService {
                     if (saleService.setnx(redisKey, String.valueOf(saleTicket.getUserId()))) {
                         //如果获取到了锁，ticketCount -1
                         int stock = saleService.substractStock(String.valueOf(saleTicket.getSceneId()),"1");
-                        log.info("库存还剩下{}个",stock);
+                        log.info("库存还剩下{}个,sceneId为{}",stock,String.valueOf(saleTicket.getSceneId()));
                         if(stock ==-2){
                             //告诉客户端库存不足，秒杀已结束
                             return "full";

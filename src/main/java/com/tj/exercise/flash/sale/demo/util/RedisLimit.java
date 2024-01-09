@@ -27,7 +27,7 @@ public class RedisLimit {
             //解析lua文件
             String script = ScriptUtil.getScript("limit.lua");
             //请求限流
-            String key = String.valueOf(System.currentTimeMillis()/ 1000);
+             String key = String.valueOf(System.currentTimeMillis() / 1000);
             // 计数限流
             result = jedis.eval(script, Collections.singletonList(key),Collections.singletonList(String.valueOf(limit)));
             if(FAIL_CODE !=(Long)result){
