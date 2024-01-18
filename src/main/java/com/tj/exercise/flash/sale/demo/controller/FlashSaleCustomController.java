@@ -26,12 +26,7 @@ public class FlashSaleCustomController {
     public String sale(@RequestBody SaleTicket saleTicket){
         String saleResult = "";
         try {
-            if(RedisLimit.limit()) {
-                saleResult = saleCustomService.buySceneTicket(saleTicket);
-            }
-            else{
-                saleResult = "qps已满";
-            }
+            saleResult = saleCustomService.buySceneTicket(saleTicket);
             return saleResult;
         }
         catch(Exception ex){

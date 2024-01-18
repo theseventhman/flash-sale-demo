@@ -3,6 +3,9 @@ package com.tj.exercise.flash.sale.demo.service.Impl;
 import com.tj.exercise.flash.sale.demo.util.JedisUtils;
 import com.tj.exercise.flash.sale.demo.util.RedisUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RBucket;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
@@ -16,22 +19,57 @@ import redis.clients.jedis.JedisPool;
 @Service
 @Slf4j
 public class SaleService {
+    @Autowired
+    private RedissonClient redissonClient;
+
     public boolean setnx(String key, String val) {
-            JedisPool jedisPool = RedisUtil.getJedisPool();
-            // 使用 jedisPool 进行操作
-            try (Jedis jedis = jedisPool.getResource()) {
-                // 使用Jedis对象进行Redis操作
-                // ...
-                jedis.auth("123456");
-                String setResult = jedis.set(key,val,"NX","PX",1000 * 60);
-                if(!ObjectUtils.isEmpty(setResult)) {
-                    return setResult.equalsIgnoreCase("ok");
+        JedisPool jedisPool = RedisUtil.getJedisPool();
+        // 使用 jedisPool 进行操作
+        try (Jedis jedis = jedisPool.getResource()) {
+            // 使用Jedis对象进行Redis操作
+            // ...
+            jedis.auth("123456");
+            String setResult = jedis.set(key,val,"NX","PX",1000 * 60);
+            if(!ObjectUtils.isEmpty(setResult)) {
+                return setResult.equalsIgnoreCase("ok");
+            }
+            else{
+                return false;
+            }
+        } catch (Exception e) {
+            log.error("出错了",e+"key:"+key+"val:"+val);
+        }
+        return false;
+    }
+
+
+    public boolean getDistributeLock(String key,String substractKey) {
+            RLock lock = redissonClient.getLock(key);
+
+            try{
+                if (lock.tryLock()){
+                    //获取到了锁后将value减1
+                    RBucket<Integer> valueBucket = redissonClient.getBucket(substractKey);
+                    if(valueBucket.get() == 0){
+                        log.info("库存已满，key为{}",key);
+                        return false;
+                    }
+                    else {
+                        // 库存未满，进行减1操作
+                        valueBucket.set(valueBucket.get() - 1);
+                        log.info("当前库存数量为{},key为{}",valueBucket.get() - 1,key);
+                        return true;
+                    }
                 }
                 else{
                     return false;
                 }
             } catch (Exception e) {
-                log.error("出错了",e+"key:"+key+"val:"+val);
+                log.error("出错了",e+"key:"+key);
+            } finally {
+                if(lock !=null && lock.isLocked() && lock.isHeldByCurrentThread()){
+                    lock.unlock();
+                }
             }
             return false;
         }

@@ -11,6 +11,8 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.redisson.Redisson;
 import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.TimeUnit;
@@ -24,7 +26,8 @@ import java.util.concurrent.TimeUnit;
 @Component
 @RequiredArgsConstructor
 public class RedissonSyncLockAspect {
-    private final Redisson redisson;
+    @Autowired
+    private  RedissonClient redisson;
 
     @Around(value = "@annotation( com.tj.exercise.flash.sale.demo.annotation.RedissonSyncLock)")
     public Object around(ProceedingJoinPoint joinPoint) throws  Throwable{

@@ -19,11 +19,14 @@ public class RedissonConfiguration {
     @Value("${redisson.password}")
     private String redisPassWord;
 
+    @Value("${redisson.port}") // 添加端口配置
+    private int redisPort;
+
     @Bean
     public RedissonClient redissonClient(){
         Config config = new Config();
         config.useSingleServer()
-                .setAddress(redisAddress)
+                .setAddress(redisAddress + ":" + redisPort)
                 .setPassword(redisPassWord);
         return Redisson.create(config);
 
